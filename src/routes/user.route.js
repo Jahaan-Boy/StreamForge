@@ -1,5 +1,5 @@
 import { Router } from "express";
-import {changeCurrentPassword, clearWatchHistory, getChannelVideos, getCurrentUser, getSubscriberCount, getUserChannelProfie, getWatchHistory, loginUser, logoutUser, openVideo, refreshAccessToken, registerUser, toggleSubscription, updateAccountDetails, updateUserAvatar, updateUserCoverImage, uploadVideo,getOwnSubscriptions} from '../controllers/user.controller.js'
+import {changeCurrentPassword, clearWatchHistory, getChannelVideos, getCurrentUser, getSubscriberCount, getUserChannelProfie, getWatchHistory, loginUser, logoutUser, openVideo, refreshAccessToken, registerUser, toggleSubscription, updateAccountDetails, updateUserAvatar, updateUserCoverImage, uploadVideo,getOwnSubscriptions, getVideoDetails} from '../controllers/user.controller.js'
 import {upload} from '../middlewares/multer.middleware.js'
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
@@ -52,4 +52,6 @@ router.route('/get-subcribers-count/:channelId').get(verifyJWT,getSubscriberCoun
 router.route('/channel-videos/:channelId').get(verifyJWT,getChannelVideos);
 
 router.route('/my-subscriptions').get(verifyJWT,getOwnSubscriptions);
+
+router.route('/video-details/:videoId').get(verifyJWT,getVideoDetails)
 export default router

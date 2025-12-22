@@ -580,6 +580,21 @@ const getOwnSubscriptions = asyncHandler(async (req, res) => {
   );
 });
 
+const getVideoDetails = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+
+  const video = await Video.findById(videoId)
+    .populate("owner", "username avatar");
+
+  if (!video || !video.isPublished) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  return res.status(200).json(
+    new ApiResponse(200, video, "Video details fetched")
+  );
+});
+
 export { 
     registerUser,
     loginUser,
@@ -597,5 +612,6 @@ export {
     toggleSubscription,
     clearWatchHistory,
     getSubscriberCount,
-    getOwnSubscriptions
+    getOwnSubscriptions,
+    getVideoDetails
 };
