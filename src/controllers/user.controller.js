@@ -6,6 +6,7 @@ import { ApiResponse } from '../utils/ApiResponse.js'
 import  jwt  from 'jsonwebtoken'
 import mongoose from 'mongoose'
 import { Video } from '../models/video.model.js'
+import {Subscription} from '../models/subscription.model.js'
 
 const generateAccessAndRefreshTokens=async(userId)=>{
     try{
@@ -507,6 +508,77 @@ const registerUser=asyncHandler( async (req,res)=>{
         return res.status(200).json(new ApiResponse(200,video,"Video opened successfully"));
 });
 
+  const toggleSubscription = asyncHandler(async (req, res) => {
+    const {channelId} =req.params;
+    const userId=req.user._id;
+
+    if (channelId.toString()===userId.toString()) {
+        throw new ApiError(400, "Cannot subscribe to yourself");
+    }
+
+    const existing= await Subscription.findOne({
+        subscriber:userId,
+        channel:channelId,
+    });
+
+    if(existing){
+        await existing.deleteOne();
+        return res.status(200).json(new ApiResponse(200,{ subscribed: false },"Unsubscribed"));
+    }
+
+    await Subscription.create({
+        subscriber: userId,
+        channel: channelId,
+    });
+
+    return res.status(200).json(new ApiResponse(200,{ subscribed: true },"Subscribed"));
+});
+
+  const clearWatchHistory = asyncHandler(async (req, res) => {
+    await User.findByIdAndUpdate(req.user._id, {
+        $set: { watchHistory: [] },
+    });
+
+    return res.status(200).json(
+        new ApiResponse(200, {}, "Watch history cleared")
+    );
+});
+
+const getSubscriberCount = asyncHandler(async (req, res) => {
+    const { channelId } = req.params;
+
+    const count = await Subscription.countDocuments({
+        channel: channelId,
+    });
+
+    return res.status(200).json(
+        new ApiResponse(200, { subscribers: count }, "Subscriber count fetched")
+    );
+});
+
+export const getChannelVideos = asyncHandler(async (req, res) => {
+  const { channelId } = req.params;
+
+  const videos = await Video.find({
+    owner: channelId,
+  })
+
+  return res.status(200).json(
+    new ApiResponse(200, videos, "Channel videos fetched")
+  );
+});
+
+const getOwnSubscriptions = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  const subscriptions = await Subscription.find({
+    subscriber: userId,
+  }).populate("channel", "username avatar");
+
+  return res.status(200).json(
+    new ApiResponse(200, subscriptions, "Subscribed channels fetched")
+  );
+});
 
 export { 
     registerUser,
@@ -521,5 +593,9 @@ export {
     getUserChannelProfie,
     getWatchHistory,
     uploadVideo,
-    openVideo
+    openVideo,
+    toggleSubscription,
+    clearWatchHistory,
+    getSubscriberCount,
+    getOwnSubscriptions
 };
