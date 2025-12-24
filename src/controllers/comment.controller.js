@@ -69,48 +69,70 @@ const replytoComment= asyncHandler(async(req,res)=>{
     return res.status(201).json(new ApiResponse(201,reply,"Comment replied successfully"));
 })
 
-const likeComment=asyncHandler(async(req,res)=>{
-    const {commentId}=req.params;
-    const userId= req.user._id;
+const reactToComment= asyncHandler(async(req,res)=>{
+    const { commentId } =req.params;
+    const { action } =req.body;
+    const userId =req.user._id;
 
-    const comment=await Comment.findById(commentId);
-    
-    if (!comment) {
+    const actionsAllowed = new Set(["like", "dislike"]);
+
+    if (!actionsAllowed.has(action)) {
+    throw new ApiError(400, "Invalid action");
+    }
+
+    let query;
+
+    if (action === "like") {
+        query= {
+        $addToSet:{ likes: userId },
+        $pull:{ dislikes: userId }
+        };
+    } else {
+        query= {
+        $addToSet:{ dislikes: userId },
+        $pull:{ likes: userId }
+        };
+    }
+
+    const updatedComment= await Comment.findByIdAndUpdate(
+        commentId,
+        query,
+        { new: true }
+    );
+
+    if (!updatedComment) {
         throw new ApiError(404, "Comment not found");
     }
 
-    const updatedComment= Comment.findByIdAndUpdate(commentId,{
-        $addToSet: {likes: userId},
-        $pull:{dislikes: userId},  
-    },{new: true})
+    return res.status(200).json(
+        new ApiResponse(200, updatedComment, `Comment ${action}d successfully`)
+    );
+});
 
-    return res.status(200).json(new ApiResponse(200, updatedComment, "Comment liked successfully")
-  );
-})
-
-const dislikeComment=asyncHandler(async(req,res)=>{
-    const {commentId}=req.params;
+const editComment=asyncHandler(async(req,res)=>{
     const userId= req.user._id;
-
-    const comment=await Comment.findById(commentId);
-    
-    if (!comment) {
-        throw new ApiError(404, "Comment not found");
+    const {message} =req.body
+    const {commentId} =req.params;
+    if(!message || !message.trim()){
+        throw new ApiError(400,"Comment must contain a message");
     }
 
-    const updatedComment= Comment.findByIdAndUpdate(commentId,{
-        $addToSet: {dislikes: userId},
-        $pull:{likes: userId},  
-    },{new: true})
-
-    return res.status(200).json(new ApiResponse(200, updatedComment, "Comment liked successfully")
+    const updatedComment = await Comment.findOneAndUpdate(
+        { _id: commentId, owner: userId},
+        { $set: { text: message.trim() }},
+        { new: true }
   );
-})
 
+    if (!updatedComment) {
+        throw new ApiError(404, "Comment not found or not authorized");
+    }
+
+    return res.status(200).json(new ApiResponse(200,updatedComment,"Comment edited successfully"));
+})
 
 export{
     newComment,
     replytoComment,
-    likeComment,
-    dislikeComment,
+    reactToComment,
+    editComment
 }
