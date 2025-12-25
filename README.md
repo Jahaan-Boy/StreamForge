@@ -14,4 +14,4 @@ Production-grade backend for a YouTube-like video platform.
 Node.js, Express, MongoDB, Mongoose, JWT, Multer, Cloudinary
 
 ## Status
-Actively developed for learning and portfolio purposes.
+Actively developed for learning.
