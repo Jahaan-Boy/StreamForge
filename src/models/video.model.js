@@ -36,7 +36,16 @@ const videoSchema=new Schema({
     commentsCount: { 
         type: Number, 
         default: 0 
-    }
+    },
+    likes: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    }],
+
+    dislikes: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    }]
 },{timestamps:true})
 
 videoSchema.plugin(mongooseAggregatePaginate)

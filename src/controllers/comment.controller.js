@@ -18,10 +18,6 @@ const newComment= asyncHandler(async(req,res)=>{
         throw new ApiError(404, "Video not found");
     }
     
-    await Video.findByIdAndUpdate(videoId, {
-        $inc: { commentsCount: 1 }
-    });
-
     const newComment= await Comment.create({
         text:message.trim(),
         owner:ownerId,
@@ -36,19 +32,12 @@ const newComment= asyncHandler(async(req,res)=>{
 })
 
 const replytoComment= asyncHandler(async(req,res)=>{
-    const {videoId,commentId}=req.params;
+    const {commentId}=req.params;
     const ownerId=req.user._id;
     const {message}=req.body;
     if(!message || !message.trim()){
         throw new ApiError(400,"Must contain a message");
     }
-
-    const video=await Video.findById(videoId);
-    
-    if (!video) {
-        throw new ApiError(404, "Video not found");
-    }
-    
 
     const parentComment = await Comment.findById(commentId);
     if (!parentComment) {
@@ -58,11 +47,11 @@ const replytoComment= asyncHandler(async(req,res)=>{
     const reply= await Comment.create({
         text:message.trim(),
         owner:ownerId,
-        video:videoId,
+        video:parentComment.video,
         parent:commentId
     })
 
-    await Video.findByIdAndUpdate(videoId, {
+    await Video.findByIdAndUpdate(parentComment.video, {
         $inc: { commentsCount: 1 }
     });
 
