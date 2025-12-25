@@ -1,1 +1,1 @@
-export const DB_NAME="StreamForge"
+export const DB_NAME=
